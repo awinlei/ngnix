@@ -76,7 +76,7 @@ http {
             include        fastcgi_params;
         }
     }
-3,启动脚本[start_ngnix.bat]：
+4,启动脚本[start_ngnix.bat]：
   @echo off
   REM Windows 下无效
   REM set PHP_FCGI_CHILDREN=5
@@ -90,7 +90,7 @@ http {
   echo Starting nginx...
   RunHiddenConsole D:/nginx/nginx.exe -p D:/nginx
 
-4,关闭脚本[stop_ngnix.bat]：
+5,关闭脚本[stop_ngnix.bat]：
   @echo off
   echo Stopping nginx...  
   taskkill /F /IM nginx.exe > nul
