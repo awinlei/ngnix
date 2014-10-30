@@ -68,7 +68,7 @@ http {
         #}
 
         # pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000
-        location ~ \.(do|php)$ {
+         location ~ .+\.(do|php)?$ { # 转发规则，如果是默认的location ~ \.(do|php)$  这种，子文件夹下的无法访问，location规则要看看
             root           d:/www/workspace/xxxx;
             fastcgi_pass   127.0.0.1:9000; #重要：fastcgi及其监听的端口，与PHP的cgi启动时指定的要一致
             fastcgi_index  index.php; #默认首页
