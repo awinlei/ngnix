@@ -1,0 +1,101 @@
+配置感想：
+程序安装目录：
+ngnix： D:\ngnix
+php： D:\php  包含所有拓展[memcache,redis等等]
+
+1,php.ini配置：
+    enable_dl = On
+　　cgi.force_redirect = 0
+　　cgi.fix_pathinfo=1  #重要，必须打开, 其他可以不管，不是必须的
+　　fastcgi.impersonate = 1
+　　cgi.rfc2616_headers = 1
+　　
+2,ngnix.conf配置:
+
+#user  nobody;
+worker_processes  1;
+error_log  logs/error.log; #错误日志存放路径
+#error_log  logs/error.log  notice;
+#error_log  logs/error.log  info;
+#pid        logs/nginx.pid;
+events {
+    worker_connections  64; #开启线程数量
+}
+http {
+    include       mime.types;
+    default_type  application/octet-stream;
+    log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                      '$status $body_bytes_sent "$http_referer" '
+                      '"$http_user_agent" "$http_x_forwarded_for"';
+    #access_log  logs/access.log  main;
+    sendfile        on;
+    tcp_nopush      on;
+    keepalive_timeout  300;
+    tcp_nodelay          on;
+
+    gzip                        off;
+    gzip_comp_level             5;
+    gzip_http_version           1.0;
+    gzip_min_length             1024;
+    gzip_buffers                48k;
+    gzip_types                  text/plain application/x-javascript text/css application/xml;
+
+    client_header_buffer_size   4k;
+    large_client_header_buffers 4 16k;
+    # The following includes are specified for virtual hosts
+    include vhost/*.conf;   #加载虚拟主机配置文件
+}
+
+3,xxxx.conf配置说明[特定虚拟主机]:
+       server {
+        listen       80; 	#监听端口
+        server_name  xxxxx.com;	#服务器名称
+        charset utf-8;
+        #access_log  logs/host.access.log  main;
+        location / {
+            root   d:/www/workspace/xxxx;	#文件存放路径
+            index index.do index.php;	#别忘加index.php,index.do,具体情况看业务需求
+        }
+        #error_page  404              /404.html;
+        # redirect server error pages to the static page /50x.html
+        error_page   500 502 503 504  /50x.html; 	# 如果错误码为这些跳转至/50x.html页面
+        location = /50x.html {
+            root   html;	#50x.html存放路径
+        }
+        # proxy the PHP scripts to Apache listening on 127.0.0.1:80
+        #location ~ \.php$ {
+        #    proxy_pass   http://127.0.0.1;
+        #}
+
+        # pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000
+        location ~ \.(do|php)$ {
+            root           d:/www/workspace/xxxx;
+            fastcgi_pass   127.0.0.1:9000; #重要：fastcgi及其监听的端口，与PHP的cgi启动时指定的要一致
+            fastcgi_index  index.php; #默认首页
+            fastcgi_param  SCRIPT_FILENAME  $document_root$fastcgi_script_name;#启动路径，这里只需要改d:/www/workspace/xxxx即可
+            include        fastcgi_params;
+        }
+    }
+3,启动脚本[start_ngnix.bat]：
+  @echo off
+  REM Windows 下无效
+  REM set PHP_FCGI_CHILDREN=5
+  
+  REM 每个进程处理的最大请求数，或设置为 Windows 环境变量
+  set PHP_FCGI_MAX_REQUESTS=1000
+   
+  echo Starting PHP FastCGI...
+  RunHiddenConsole D:/php/php-cgi.exe -b 127.0.0.1:9000 -c D:/php/php.ini
+   
+  echo Starting nginx...
+  RunHiddenConsole D:/nginx/nginx.exe -p D:/nginx
+
+4,关闭脚本[stop_ngnix.bat]：
+  @echo off
+  echo Stopping nginx...  
+  taskkill /F /IM nginx.exe > nul
+  echo Stopping PHP FastCGI...
+  taskkill /F /IM php-cgi.exe > nul
+  exit
+
+配置完毕。
